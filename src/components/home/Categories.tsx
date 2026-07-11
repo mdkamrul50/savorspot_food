@@ -22,27 +22,27 @@ const categories: Category[] = [
   {
     name: 'Cooking Class',
     slug: 'cooking-class',
-    icon: <CookingPot className="w-5 h-5" />,
+    icon: <CookingPot className="w-6 h-6" />,
   },
   {
     name: 'Street Food Walk',
     slug: 'street-food',
-    icon: <MapPin className="w-5 h-5" />,
+    icon: <MapPin className="w-6 h-6" />,
   },
   {
     name: 'Farm to Table',
     slug: 'farm-visit',
-    icon: <Wheat className="w-5 h-5" />,
+    icon: <Wheat className="w-6 h-6" />,
   },
   {
     name: 'Dinner Experience',
     slug: 'dinner',
-    icon: <UtensilsCrossed className="w-5 h-5" />,
+    icon: <UtensilsCrossed className="w-6 h-6" />,
   },
   {
     name: 'Food Photography Tour',
     slug: 'food-photography',
-    icon: <Camera className="w-5 h-5" />,
+    icon: <Camera className="w-6 h-6" />,
   },
 ];
 
@@ -62,23 +62,23 @@ const itemVariants = {
 
 export default function Categories() {
   return (
-    <section className="py-20 md:py-28 bg-soft-cream">
+    <section className="py-20 md:py-28 bg-[#f3ddcd]">
       <Container>
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-16 items-center">
-          {/* Left Image */}
+          {/* Left Image – hover zoom */}
           <motion.div
             initial={{ opacity: 0, x: -30 }}
             whileInView={{ opacity: 1, x: 0 }}
             viewport={{ once: true, amount: 0.2 }}
             transition={{ duration: 0.6 }}
-            className="relative aspect-[4/5] rounded-2xl overflow-hidden shadow-lg"
+            className="relative aspect-[4/5] rounded-2xl overflow-hidden shadow-lg group"
           >
             <Image
-              src="https://images.unsplash.com/photo-1551218808-94e220e084d2?q=80&w=687&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D"
+              src="https://images.unsplash.com/photo-1549590143-d5855148a9d5?q=80&w=764&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D"
               alt="Local food experience"
               fill
               sizes="(max-width: 768px) 100vw, 50vw"
-              className="object-cover hover:scale-105 transition-transform duration-500"
+              className="object-cover transition-transform duration-500 group-hover:scale-110"
             />
             <div className="absolute inset-0 bg-gradient-to-t from-rich-brown/20 to-transparent" />
           </motion.div>
@@ -104,9 +104,9 @@ export default function Categories() {
               </p>
             </motion.div>
 
-            {/* Categories Grid (inside right column) */}
+            {/* Categories Grid – সমান বর্গাকার কার্ড */}
             <motion.div
-              className="grid grid-cols-2 sm:grid-cols-3 gap-3 md:gap-4"
+              className="grid grid-cols-2 sm:grid-cols-3 gap-4"
               variants={containerVariants}
               initial="hidden"
               whileInView="visible"
@@ -117,17 +117,26 @@ export default function Categories() {
                   key={cat.slug}
                   variants={itemVariants}
                   whileHover={{ y: -4, transition: { duration: 0.2 } }}
-                  className="group"
+                  className="group aspect-square"
                 >
                   <Link
                     href={`/explore?category=${cat.slug}`}
-                    className="flex flex-col items-center gap-2 p-4 bg-white rounded-xl shadow-sm hover:shadow-md transition-all duration-300 border border-transparent hover:border-brand-orange/20"
+                    className="flex flex-col items-center justify-center h-full bg-white rounded-2xl shadow-sm 
+                               transition-all duration-300 border border-transparent 
+                               hover:bg-brand-orange/5 hover:border-brand-orange/20 hover:shadow-md 
+                               p-4"
                   >
-                    {/* Icon circle (smaller) */}
-                    <div className="w-12 h-12 rounded-full bg-brand-orange/10 text-brand-orange flex items-center justify-center group-hover:bg-brand-orange group-hover:text-white transition-colors duration-300">
+                    {/* Icon circle */}
+                    <div
+                      className="w-14 h-14 rounded-full bg-brand-orange/10 text-brand-orange flex items-center justify-center mb-3 
+                                  transition-colors duration-300 group-hover:bg-brand-orange group-hover:text-[#D35400]"
+                    >
                       {cat.icon}
                     </div>
-                    <span className="text-xs md:text-sm font-medium text-rich-brown text-center group-hover:text-brand-orange transition-colors">
+                    <span
+                      className="text-sm md:text-base font-medium text-rich-brown text-center leading-tight 
+                                 transition-colors duration-300 group-hover:text-[#D35400]"
+                    >
                       {cat.name}
                     </span>
                   </Link>

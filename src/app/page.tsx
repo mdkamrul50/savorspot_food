@@ -1,6 +1,7 @@
 import Categories from '@/components/home/Categories';
 import HeroSlider from '@/components/home/HeroSlider';
 import HowItWorks from '@/components/home/HowItWorks';
+import NewsletterCTA from '@/components/home/NewsletterCTA';
 import Image from 'next/image';
 
 export default function Home() {
@@ -9,6 +10,7 @@ export default function Home() {
     <HeroSlider />
     <HowItWorks />
     <Categories />
+    <NewsletterCTA />
     </div>
   );
 }
