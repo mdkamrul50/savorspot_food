@@ -65,7 +65,7 @@ export default function LoginPage() {
             {/* Left decorative image panel (hidden on very small screens) */}
             <div className="hidden md:block relative bg-[#3B2F2F]">
               <Image
-                src="https://images.unsplash.com/photo-1504674900247-0877df9cc836?w=600&q=80"
+                src="https://images.unsplash.com/photo-1540420828642-fca2c5c18abe?q=80&w=682&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D"
                 alt="Food experience"
                 fill
                 className="object-cover"
