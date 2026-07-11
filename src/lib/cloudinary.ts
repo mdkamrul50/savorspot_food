@@ -1,0 +1,2 @@
+// Cloudinary configurations
+export {};

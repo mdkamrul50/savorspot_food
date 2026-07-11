@@ -1,0 +1,1 @@
+export default function CloudinaryUpload() { return <div>Upload</div>; }
