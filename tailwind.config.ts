@@ -6,11 +6,14 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
-        // Primary palette
-        'toasted-orange': '#D35400',
-        'deep-aubergine': '#2D1B33',
-        'cream-white': '#FDFBF7',
-        // Neutral
+        // 🌟 Primary (action, buttons, accents)
+        'brand-orange': '#E67E22',
+        // 🍂 Secondary (deep but warm – black নয়)
+        'rich-brown': '#4A3728',
+        // 🤍 Light background (cream)
+        'soft-cream': '#FFF1E6',
+
+        // 🎯 Neutral
         'warm-gray': '#9C908A',
       },
       fontFamily: {
