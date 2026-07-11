@@ -71,7 +71,7 @@ export default function NewsletterCTA() {
             whileInView={{ opacity: 1, x: 0 }}
             viewport={{ once: true, amount: 0.2 }}
             transition={{ duration: 0.6 }}
-            className="bg-white/5 backdrop-blur-md border border-white/10 rounded-2xl p-8 md:p-10"
+            className=" shadow-2xl rounded-3xl p-8 md:p-10"
           >
             <div className="flex items-center gap-3 mb-6">
               <Mail className="w-5 h-5 text-[#E67E22]" />
