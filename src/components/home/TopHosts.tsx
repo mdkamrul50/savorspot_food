@@ -22,7 +22,7 @@ const hosts: Host[] = [
   {
     name: 'Shirin Apa',
     avatar:
-      'https://images.unsplash.com/photo-1556910103-1c02745aae4d?w=200&q=80', // cooking woman
+      'https://images.unsplash.com/photo-1556910103-1c02745aae4d?w=200&q=80', 
     specialty: 'Biryani & Kacchi',
     rating: 4.9,
     reviewCount: 56,
@@ -31,7 +31,7 @@ const hosts: Host[] = [
   {
     name: 'Rafiq Bhai',
     avatar:
-      'https://images.unsplash.com/photo-1536965764833-4301c8ad3ed7?w=200&q=80', // man with food
+      'https://images.unsplash.com/photo-1536965764833-4301c8ad3ed7?w=200&q=80', 
     specialty: 'Street Food Safari',
     rating: 4.8,
     reviewCount: 43,
@@ -40,7 +40,7 @@ const hosts: Host[] = [
   {
     name: 'Nusrat Di',
     avatar:
-      'https://images.unsplash.com/photo-1583394293214-28ded15ee548?w=200&q=80', // woman smiling
+      'https://images.unsplash.com/photo-1583394293214-28ded15ee548?w=200&q=80', 
     specialty: 'Pitha & Sweets',
     rating: 4.9,
     reviewCount: 38,
@@ -49,7 +49,7 @@ const hosts: Host[] = [
   {
     name: 'Karim Ustad',
     avatar:
-      'https://images.unsplash.com/photo-1600180758890-6b94519a8ba6?w=200&q=80', // chef man
+      'https://images.unsplash.com/photo-1600180758890-6b94519a8ba6?w=200&q=80', 
     specialty: 'Farm-to-Table',
     rating: 4.7,
     reviewCount: 29,
@@ -58,7 +58,7 @@ const hosts: Host[] = [
   {
     name: 'Fatema Khala',
     avatar:
-      'https://images.unsplash.com/photo-1515023115689-589c33041d3c?w=200&q=80', // woman cooking
+      'https://images.unsplash.com/photo-1515023115689-589c33041d3c?w=200&q=80', 
     specialty: 'Home Cooking',
     rating: 4.8,
     reviewCount: 34,
@@ -67,7 +67,7 @@ const hosts: Host[] = [
   {
     name: 'Shakil Vai',
     avatar:
-      'https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?w=200&q=80', // professional man
+      'https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?w=200&q=80', 
     specialty: 'Food Photography',
     rating: 4.6,
     reviewCount: 22,
@@ -90,7 +90,7 @@ export default function TopHosts() {
     [autoplay.current]
   );
 
-  // Reset autoplay when component unmounts
+ 
   useEffect(() => {
     return () => {
       autoplay.current?.stop();
