@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, type FC, type MouseEvent } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import {
@@ -8,23 +8,42 @@ import {
   AnimatePresence,
   useScroll,
   useMotionValueEvent,
+  type MotionValue,
 } from 'framer-motion';
 import Container from './Container';
 import Button from '../ui/Button';
 
-const navLinks = [
+// ──── Type Definitions ────
+interface NavLink {
+  href: string;
+  label: string;
+}
+
+interface ScrollState {
+  scrolled: boolean;
+}
+
+// ──── Constants ────
+const navLinks: NavLink[] = [
   { href: '/', label: 'Home' },
   { href: '/explore', label: 'Explore' },
 ];
 
-export default function Navbar() {
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const [scrolled, setScrolled] = useState(false);
-  const pathname = usePathname();
-  const { scrollY, scrollYProgress } = useScroll();
+const SCROLL_THRESHOLD: number = 50;
 
-  useMotionValueEvent(scrollY, 'change', (latest) => {
-    setScrolled(latest > 50);
+// ──── Component ────
+const Navbar: FC = () => {
+  const [mobileMenuOpen, setMobileMenuOpen] = useState<boolean>(false);
+  const [scrolled, setScrolled] = useState<boolean>(false);
+  const pathname: string = usePathname();
+  const {
+    scrollY,
+    scrollYProgress,
+  }: { scrollY: MotionValue<number>; scrollYProgress: MotionValue<number> } =
+    useScroll();
+
+  useMotionValueEvent(scrollY, 'change', (latest: number) => {
+    setScrolled(latest > SCROLL_THRESHOLD);
   });
 
   useEffect(() => {
@@ -34,15 +53,22 @@ export default function Navbar() {
     };
   }, [mobileMenuOpen]);
 
-  const closeMobileMenu = () => setMobileMenuOpen(false);
+  const closeMobileMenu = (): void => setMobileMenuOpen(false);
+
+  const handleMobileToggle = (): void => {
+    setMobileMenuOpen((prev: boolean) => !prev);
+  };
+
+  const handleLinkClick = (e: MouseEvent<HTMLAnchorElement>): void => {
+    closeMobileMenu();
+  };
 
   return (
     <motion.header
-      // ✅ পরিবর্তন এখানে
       className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
         scrolled
-          ? 'bg-[#2D1B33]/95 backdrop-blur-md shadow-lg shadow-black/10' // স্ক্রল করলে: কালার + হালকা ব্লার
-          : 'bg-transparent' // শুরুতে সম্পূর্ণ স্বচ্ছ
+          ? 'bg-deep-aubergine/35 backdrop-blur-sm shadow-lg shadow-black/10'
+          : 'bg-transparent '
       }`}
       initial={{ y: -100 }}
       animate={{ y: 0 }}
@@ -67,7 +93,7 @@ export default function Navbar() {
 
           {/* Desktop Menu */}
           <div className="hidden lg:flex items-center gap-8">
-            {navLinks.map((link) => (
+            {navLinks.map((link: NavLink) => (
               <Link
                 key={link.href}
                 href={link.href}
@@ -104,7 +130,7 @@ export default function Navbar() {
           {/* Mobile Menu Toggle */}
           <button
             className="lg:hidden relative w-10 h-10 flex flex-col items-center justify-center gap-1.5 text-[#FDFBF7]"
-            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+            onClick={handleMobileToggle}
             aria-label="Toggle menu"
           >
             <motion.span
@@ -157,7 +183,7 @@ export default function Navbar() {
                 </button>
               </div>
               <div className="flex flex-col gap-4">
-                {navLinks.map((link, i) => (
+                {navLinks.map((link: NavLink, i: number) => (
                   <motion.div
                     key={link.href}
                     initial={{ opacity: 0, x: 20 }}
@@ -166,7 +192,7 @@ export default function Navbar() {
                   >
                     <Link
                       href={link.href}
-                      onClick={closeMobileMenu}
+                      onClick={handleLinkClick}
                       className={`text-lg font-medium ${
                         pathname === link.href
                           ? 'text-[#D35400]'
@@ -185,7 +211,7 @@ export default function Navbar() {
                 >
                   <Link
                     href="/login"
-                    onClick={closeMobileMenu}
+                    onClick={handleLinkClick}
                     className="text-[#D35400] text-lg font-semibold"
                   >
                     Login
@@ -198,7 +224,7 @@ export default function Navbar() {
                 >
                   <Link
                     href="/login"
-                    onClick={closeMobileMenu}
+                    onClick={handleLinkClick}
                     className="block mt-2"
                   >
                     <Button className="w-full">Become a Host</Button>
@@ -218,4 +244,6 @@ export default function Navbar() {
       />
     </motion.header>
   );
-}
+};
+
+export default Navbar;

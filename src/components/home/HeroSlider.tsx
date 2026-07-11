@@ -53,7 +53,7 @@ export default function HeroSlider() {
   // Auto-play
   useEffect(() => {
     if (!isAutoPlaying) return;
-    const interval = setInterval(nextSlide, 2000);
+    const interval = setInterval(nextSlide, 3000);
     return () => clearInterval(interval);
   }, [isAutoPlaying, nextSlide]);
 
@@ -107,7 +107,7 @@ export default function HeroSlider() {
             >
               {slides[currentSlide].title}
             </h1>
-            <p className="text-lg sm:text-xl md:text-2xl mb-8 text-[#FDFBF7]/80 font-light max-w-2xl mx-auto">
+            <p className="text-sm sm:text-xl md:text-xl mb-8 text-[#FDFBF7]/80 font-light max-w-2xl mx-auto">
               {slides[currentSlide].subtitle}
             </p>
             <Link href={slides[currentSlide].link}>
