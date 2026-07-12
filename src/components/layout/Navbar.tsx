@@ -1,6 +1,7 @@
+// src/components/layout/Navbar.tsx
 'use client';
 
-import { useState, useEffect, type FC, type MouseEvent } from 'react';
+import { useState, useEffect, type FC } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import {
@@ -8,10 +9,11 @@ import {
   AnimatePresence,
   useScroll,
   useMotionValueEvent,
-  type MotionValue,
 } from 'framer-motion';
 import Container from './Container';
 import Button from '../ui/Button';
+import { authClient } from '@/lib/auth-client'; 
+import { User, LogOut } from 'lucide-react'; 
 
 // ──── Type Definitions ────
 interface NavLink {
@@ -19,28 +21,31 @@ interface NavLink {
   label: string;
 }
 
-interface ScrollState {
-  scrolled: boolean;
-}
-
 // ──── Constants ────
-const navLinks: NavLink[] = [
+const publicLinks: NavLink[] = [
   { href: '/', label: 'Home' },
   { href: '/explore', label: 'Explore' },
 ];
 
-const SCROLL_THRESHOLD: number = 50;
+const authenticatedLinks: NavLink[] = [
+  { href: '/experiences/add', label: 'Add Experience' },
+  { href: '/experiences/manage', label: 'Manage' },
+];
+
+const SCROLL_THRESHOLD = 50;
 
 // ──── Component ────
 const Navbar: FC = () => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState<boolean>(false);
   const [scrolled, setScrolled] = useState<boolean>(false);
-  const pathname: string = usePathname();
-  const {
-    scrollY,
-    scrollYProgress,
-  }: { scrollY: MotionValue<number>; scrollYProgress: MotionValue<number> } =
-    useScroll();
+  const [profileDropdownOpen, setProfileDropdownOpen] =
+    useState<boolean>(false);
+  const pathname = usePathname();
+  const { scrollY, scrollYProgress } = useScroll();
+
+  // better-auth session
+  const { data: session, isPending } = authClient.useSession();
+  const user = session?.user;
 
   useMotionValueEvent(scrollY, 'change', (latest: number) => {
     setScrolled(latest > SCROLL_THRESHOLD);
@@ -53,21 +58,23 @@ const Navbar: FC = () => {
     };
   }, [mobileMenuOpen]);
 
-  const closeMobileMenu = (): void => setMobileMenuOpen(false);
+  const closeMobileMenu = () => setMobileMenuOpen(false);
+  const handleMobileToggle = () => setMobileMenuOpen((prev) => !prev);
 
-  const handleMobileToggle = (): void => {
-    setMobileMenuOpen((prev: boolean) => !prev);
+  const handleLogout = async () => {
+    await authClient.signOut();
+    setProfileDropdownOpen(false);
+    closeMobileMenu(); 
   };
 
-  const handleLinkClick = (e: MouseEvent<HTMLAnchorElement>): void => {
-    closeMobileMenu();
-  };
+  
+  const navLinks = user ? [...publicLinks, ...authenticatedLinks] : publicLinks;
 
   return (
     <motion.header
       className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
         scrolled
-          ? 'bg-deep-aubergine/35 backdrop-blur-sm shadow-lg shadow-black/10'
+          ? 'bg-[#2D1B33]/40 backdrop-blur-xl shadow-lg shadow-black/10'
           : 'bg-transparent '
       }`}
       initial={{ y: -100 }}
@@ -93,7 +100,7 @@ const Navbar: FC = () => {
 
           {/* Desktop Menu */}
           <div className="hidden lg:flex items-center gap-8">
-            {navLinks.map((link: NavLink) => (
+            {navLinks.map((link) => (
               <Link
                 key={link.href}
                 href={link.href}
@@ -117,14 +124,69 @@ const Navbar: FC = () => {
 
           {/* Desktop Right Side */}
           <div className="hidden lg:flex items-center gap-4">
-            <Link href="/login">
-              <Button variant="outline" size="sm">
-                Login
-              </Button>
-            </Link>
-            <Link href="/login">
-              <Button>Become a Host</Button>
-            </Link>
+            {isPending ? (
+              <div className="w-8 h-8 rounded-full bg-gray-500 animate-pulse" /> // skeleton while loading session
+            ) : user ? (
+              <div className="relative">
+                <button
+                  onClick={() => setProfileDropdownOpen(!profileDropdownOpen)}
+                  className="flex items-center gap-2 focus:outline-none"
+                >
+                  {user.image ? (
+                    <img
+                      src={user.image}
+                      alt={user.name ?? ''}
+                      className="w-8 h-8 rounded-full object-cover"
+                    />
+                  ) : (
+                    <div className="w-8 h-8 rounded-full bg-[#D35400] flex items-center justify-center text-white text-sm font-bold">
+                      {(user.name ?? 'U')[0].toUpperCase()}
+                    </div>
+                  )}
+                  <span className="text-[#FDFBF7] text-sm hidden xl:block">
+                    {user.name?.split(' ')[0]}
+                  </span>
+                </button>
+                <AnimatePresence>
+                  {profileDropdownOpen && (
+                    <motion.div
+                      initial={{ opacity: 0, y: -10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: -10 }}
+                      transition={{ duration: 0.2 }}
+                      className="absolute right-0 mt-3 w-48 bg-[#2D1B33]/90 backdrop-blur-md border border-[#D35400]/20 rounded-xl shadow-xl overflow-hidden z-50"
+                    >
+                      <Link
+                        href="/profile"
+                        onClick={() => setProfileDropdownOpen(false)}
+                        className="flex items-center gap-2 px-4 py-3 text-sm text-[#FDFBF7] hover:bg-[#D35400]/20 transition-colors"
+                      >
+                        <User className="w-4 h-4" />
+                        Profile
+                      </Link>
+                      <button
+                        onClick={handleLogout}
+                        className="w-full flex items-center gap-2 px-4 py-3 text-sm text-[#FDFBF7] hover:bg-[#D35400]/20 transition-colors"
+                      >
+                        <LogOut className="w-4 h-4" />
+                        Logout
+                      </button>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </div>
+            ) : (
+              <>
+                <Link href="/login">
+                  <Button variant="outline" size="sm">
+                    Login
+                  </Button>
+                </Link>
+                <Link href="/login">
+                  <Button>Become a Host</Button>
+                </Link>
+              </>
+            )}
           </div>
 
           {/* Mobile Menu Toggle */}
@@ -183,7 +245,7 @@ const Navbar: FC = () => {
                 </button>
               </div>
               <div className="flex flex-col gap-4">
-                {navLinks.map((link: NavLink, i: number) => (
+                {navLinks.map((link, i) => (
                   <motion.div
                     key={link.href}
                     initial={{ opacity: 0, x: 20 }}
@@ -192,7 +254,7 @@ const Navbar: FC = () => {
                   >
                     <Link
                       href={link.href}
-                      onClick={handleLinkClick}
+                      onClick={closeMobileMenu}
                       className={`text-lg font-medium ${
                         pathname === link.href
                           ? 'text-[#D35400]'
@@ -203,28 +265,40 @@ const Navbar: FC = () => {
                     </Link>
                   </motion.div>
                 ))}
+
                 <motion.div
                   initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.3 }}
+                  transition={{ delay: navLinks.length * 0.1 }}
                   className="mt-4 pt-4 border-t border-[#D35400]/20"
                 >
-                  <Link
-                    href="/login"
-                    onClick={handleLinkClick}
-                    className="text-[#D35400] text-lg font-semibold"
-                  >
-                    Login
-                  </Link>
+                  {isPending ? (
+                    <div className="h-10 bg-gray-500 animate-pulse rounded-lg" />
+                  ) : user ? (
+                    <button
+                      onClick={handleLogout}
+                      className="w-full text-left text-[#FDFBF7] text-lg font-medium hover:text-[#D35400] transition-colors"
+                    >
+                      Logout
+                    </button>
+                  ) : (
+                    <Link
+                      href="/login"
+                      onClick={closeMobileMenu}
+                      className="text-[#D35400] text-lg font-semibold"
+                    >
+                      Login
+                    </Link>
+                  )}
                 </motion.div>
                 <motion.div
                   initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.4 }}
+                  transition={{ delay: navLinks.length * 0.1 + 0.1 }}
                 >
                   <Link
-                    href="/login"
-                    onClick={handleLinkClick}
+                    href={user ? '/experiences/add' : '/login'}
+                    onClick={closeMobileMenu}
                     className="block mt-2"
                   >
                     <Button className="w-full">Become a Host</Button>

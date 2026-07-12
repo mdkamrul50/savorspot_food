@@ -2,19 +2,23 @@
 'use client';
 
 import { useState } from 'react';
+import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { motion } from 'framer-motion';
 import Image from 'next/image';
 import { Eye, EyeOff, Mail, Lock, ArrowRight, LogIn } from 'lucide-react';
 import Container from '@/components/layout/Container';
+import { authClient } from '@/lib/auth-client';
 
 export default function LoginPage() {
+  const router = useRouter();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [errors, setErrors] = useState<{ email?: string; password?: string }>(
     {}
   );
+  const [loading, setLoading] = useState(false);
   const [isDemoLoading, setIsDemoLoading] = useState(false);
 
   const validate = () => {
@@ -29,25 +33,51 @@ export default function LoginPage() {
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (validate()) {
-      // TODO: integrate real authentication
-      console.log('Login with:', { email, password });
+    if (!validate()) return;
+
+    setLoading(true);
+    try {
+      const { error } = await authClient.signIn.email({
+        email,
+        password,
+      });
+
+      if (error) {
+        setErrors({ email: error.message || 'Login failed' });
+      } else {
+        router.push('/');
+      }
+    } catch (err: any) {
+      setErrors({ email: 'Something went wrong. Please try again.' });
+    } finally {
+      setLoading(false);
     }
   };
 
-  const handleDemoLogin = () => {
+  const handleDemoLogin = async () => {
     setIsDemoLoading(true);
     const demoEmail = 'foodie@test.com';
     const demoPass = 'test123';
     setEmail(demoEmail);
     setPassword(demoPass);
     setErrors({});
-    setTimeout(() => {
+    try {
+      const { error } = await authClient.signIn.email({
+        email: demoEmail,
+        password: demoPass,
+      });
+      if (error) {
+        setErrors({ email: error.message || 'Demo login failed' });
+      } else {
+        router.push('/');
+      }
+    } catch (err: any) {
+      setErrors({ email: 'Demo login failed' });
+    } finally {
       setIsDemoLoading(false);
-      console.log('Demo login:', { email: demoEmail, password: demoPass });
-    }, 600);
+    }
   };
 
   return (
@@ -205,11 +235,12 @@ export default function LoginPage() {
 
                 <motion.button
                   type="submit"
+                  disabled={loading}
                   whileHover={{ scale: 1.02 }}
                   whileTap={{ scale: 0.98 }}
-                  className="w-full py-3 bg-[#E67E22] text-white font-semibold rounded-xl hover:bg-[#d35400] transition-colors flex items-center justify-center gap-2"
+                  className="w-full py-3 bg-[#E67E22] text-white font-semibold rounded-xl hover:bg-[#d35400] transition-colors flex items-center justify-center gap-2 disabled:opacity-70 disabled:cursor-not-allowed"
                 >
-                  Sign In
+                  {loading ? 'Signing in...' : 'Sign In'}
                   <LogIn className="w-5 h-5" />
                 </motion.button>
               </form>

@@ -1,21 +1,16 @@
 'use client';
 
 import { useState } from 'react';
+import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { motion } from 'framer-motion';
 import Image from 'next/image';
-import {
-  Eye,
-  EyeOff,
-  Mail,
-  Lock,
-  User,
-  ArrowRight,
-  UserPlus,
-} from 'lucide-react';
+import { Eye, EyeOff, Mail, Lock, User, UserPlus } from 'lucide-react';
 import Container from '@/components/layout/Container';
+import { authClient } from '@/lib/auth-client';
 
 export default function RegisterPage() {
+  const router = useRouter();
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -28,7 +23,8 @@ export default function RegisterPage() {
     password?: string;
     confirmPassword?: string;
   }>({});
-  const [isDemoLoading, setIsDemoLoading] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [demoLoading, setDemoLoading] = useState(false);
 
   const validate = () => {
     const newErrors: typeof errors = {};
@@ -47,28 +43,64 @@ export default function RegisterPage() {
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (validate()) {
-      // TODO: integrate real registration
-      console.log('Register with:', { name, email, password });
+    if (!validate()) return;
+
+    setLoading(true);
+    try {
+      const { error } = await authClient.signUp.email({
+        name,
+        email,
+        password,
+      });
+
+      if (error) {
+        setErrors({ email: error.message || 'Registration failed' });
+      } else {
+        // autoSignIn enabled in auth.ts, so user is already logged in
+        router.push('/'); // or router.push('/explore')
+      }
+    } catch (err: any) {
+      setErrors({ email: 'Something went wrong. Please try again.' });
+    } finally {
+      setLoading(false);
     }
   };
 
-  const handleDemoRegister = () => {
-    setIsDemoLoading(true);
+  const handleDemoRegister = async () => {
+    // Demo credentials – in production, better to generate a random user or pre-seed a demo account
     const demoName = 'Foodie Hasan';
-    const demoEmail = 'foodie@test.com';
-    const demoPass = 'test123';
+    const demoEmail = 'demo@savorspot.com';
+    const demoPass = 'demo123';
+
     setName(demoName);
     setEmail(demoEmail);
     setPassword(demoPass);
     setConfirmPassword(demoPass);
     setErrors({});
-    setTimeout(() => {
-      setIsDemoLoading(false);
-      console.log('Demo register:', { name: demoName, email: demoEmail });
-    }, 600);
+
+    setDemoLoading(true);
+    try {
+      const { error } = await authClient.signUp.email({
+        name: demoName,
+        email: demoEmail,
+        password: demoPass,
+      });
+
+      if (error) {
+        // If the demo user already exists, show error (maybe suggest trying Demo Login instead)
+        setErrors({
+          email: 'Demo account already exists. Please use Demo Login instead.',
+        });
+      } else {
+        router.push('/');
+      }
+    } catch (err: any) {
+      setErrors({ email: 'Demo registration failed.' });
+    } finally {
+      setDemoLoading(false);
+    }
   };
 
   return (
@@ -81,10 +113,10 @@ export default function RegisterPage() {
           className="bg-white rounded-3xl shadow-xl overflow-hidden"
         >
           <div className="grid grid-cols-1 md:grid-cols-2">
-            {/* Left decorative image panel */}
+            {/* Left image panel (unchanged) */}
             <div className="hidden md:block relative bg-[#3B2F2F]">
               <Image
-                src="https://images.unsplash.com/photo-1506368249639-73a05d6f6488?q=80&w=687&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D"
+                src="https://images.unsplash.com/photo-1506368249639-73a05d6f6488?w=687&auto=format&fit=crop"
                 alt="Cooking experience"
                 fill
                 className="object-cover"
@@ -162,9 +194,7 @@ export default function RegisterPage() {
                         setErrors({ ...errors, name: undefined });
                       }}
                       placeholder="John Doe"
-                      className={`w-full pl-10 pr-4 py-3 rounded-xl border ${
-                        errors.name ? 'border-red-500' : 'border-gray-200'
-                      } bg-white focus:border-[#E67E22] focus:ring-2 focus:ring-[#E67E22]/10 outline-none transition-all`}
+                      className={`w-full pl-10 pr-4 py-3 rounded-xl border ${errors.name ? 'border-red-500' : 'border-gray-200'} bg-white focus:border-[#E67E22] focus:ring-2 focus:ring-[#E67E22]/10 outline-none transition-all`}
                     />
                   </div>
                   {errors.name && (
@@ -191,9 +221,7 @@ export default function RegisterPage() {
                         setErrors({ ...errors, email: undefined });
                       }}
                       placeholder="you@example.com"
-                      className={`w-full pl-10 pr-4 py-3 rounded-xl border ${
-                        errors.email ? 'border-red-500' : 'border-gray-200'
-                      } bg-white focus:border-[#E67E22] focus:ring-2 focus:ring-[#E67E22]/10 outline-none transition-all`}
+                      className={`w-full pl-10 pr-4 py-3 rounded-xl border ${errors.email ? 'border-red-500' : 'border-gray-200'} bg-white focus:border-[#E67E22] focus:ring-2 focus:ring-[#E67E22]/10 outline-none transition-all`}
                     />
                   </div>
                   {errors.email && (
@@ -220,9 +248,7 @@ export default function RegisterPage() {
                         setErrors({ ...errors, password: undefined });
                       }}
                       placeholder="••••••••"
-                      className={`w-full pl-10 pr-12 py-3 rounded-xl border ${
-                        errors.password ? 'border-red-500' : 'border-gray-200'
-                      } bg-white focus:border-[#E67E22] focus:ring-2 focus:ring-[#E67E22]/10 outline-none transition-all`}
+                      className={`w-full pl-10 pr-12 py-3 rounded-xl border ${errors.password ? 'border-red-500' : 'border-gray-200'} bg-white focus:border-[#E67E22] focus:ring-2 focus:ring-[#E67E22]/10 outline-none transition-all`}
                     />
                     <button
                       type="button"
@@ -262,11 +288,7 @@ export default function RegisterPage() {
                         setErrors({ ...errors, confirmPassword: undefined });
                       }}
                       placeholder="••••••••"
-                      className={`w-full pl-10 pr-12 py-3 rounded-xl border ${
-                        errors.confirmPassword
-                          ? 'border-red-500'
-                          : 'border-gray-200'
-                      } bg-white focus:border-[#E67E22] focus:ring-2 focus:ring-[#E67E22]/10 outline-none transition-all`}
+                      className={`w-full pl-10 pr-12 py-3 rounded-xl border ${errors.confirmPassword ? 'border-red-500' : 'border-gray-200'} bg-white focus:border-[#E67E22] focus:ring-2 focus:ring-[#E67E22]/10 outline-none transition-all`}
                     />
                     <button
                       type="button"
@@ -287,34 +309,34 @@ export default function RegisterPage() {
                   )}
                 </div>
 
-                {/* Submit */}
+                {/* Submit Button */}
                 <motion.button
                   type="submit"
+                  disabled={loading}
                   whileHover={{ scale: 1.02 }}
                   whileTap={{ scale: 0.98 }}
-                  className="w-full py-3 bg-[#E67E22] text-white font-semibold rounded-xl hover:bg-[#d35400] transition-colors flex items-center justify-center gap-2"
+                  className="w-full py-3 bg-[#E67E22] text-white font-semibold rounded-xl hover:bg-[#d35400] transition-colors flex items-center justify-center gap-2 disabled:opacity-70 disabled:cursor-not-allowed"
                 >
-                  Create Account
+                  {loading ? 'Creating account...' : 'Create Account'}
                   <UserPlus className="w-5 h-5" />
                 </motion.button>
               </form>
 
-              {/* Divider */}
+              {/* Divider & Demo Register */}
               <div className="flex items-center gap-4 my-6">
                 <div className="h-px flex-1 bg-gray-200" />
                 <span className="text-xs text-[#9C908A] uppercase">or</span>
                 <div className="h-px flex-1 bg-gray-200" />
               </div>
 
-              {/* Demo Register */}
               <motion.button
                 onClick={handleDemoRegister}
-                disabled={isDemoLoading}
+                disabled={demoLoading}
                 whileHover={{ scale: 1.02 }}
                 whileTap={{ scale: 0.98 }}
                 className="w-full py-3 border-2 border-[#E67E22] text-[#E67E22] font-semibold rounded-xl hover:bg-[#E67E22] hover:text-white transition-colors disabled:opacity-70 disabled:cursor-not-allowed"
               >
-                {isDemoLoading ? 'Loading…' : 'Try Demo Account'}
+                {demoLoading ? 'Loading…' : 'Try Demo Account'}
               </motion.button>
 
               <p className="text-center text-xs text-[#9C908A] mt-6">
