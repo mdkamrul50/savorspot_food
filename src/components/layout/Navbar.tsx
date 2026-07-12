@@ -73,13 +73,12 @@ const Navbar: FC = () => {
 
   return (
     <motion.header
-      
       className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
         isHome
           ? scrolled
-            ? 'bg-[#2D1B33]/95 backdrop-blur-xl shadow-lg shadow-black/10'
+            ? 'bg-[#3B2F2F]/45 backdrop-blur-xl shadow-lg shadow-black/10'
             : 'bg-transparent'
-          : 'bg-[#2D1B33]/95 backdrop-blur-xl shadow-lg shadow-black/10'
+          : 'bg-[#3B2F2F]/95 backdrop-blur-xl shadow-lg shadow-black/10'
       }`}
       initial={{ y: -100 }}
       animate={{ y: 0 }}
