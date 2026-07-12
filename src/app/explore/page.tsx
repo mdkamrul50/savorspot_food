@@ -4,14 +4,33 @@
 import { useState, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import Container from '@/components/layout/Container';
-import ExperienceCard from '@/components/experiences/ExperienceCard';
-import ExperienceCardSkeleton from '@/components/experiences/ExperienceCardSkeleton';
-import type { Experience } from '@/components/experiences/ExperienceCard';
-import { Search, SlidersHorizontal, ChevronDown, X } from 'lucide-react';
+import Image from 'next/image';
+import Link from 'next/link';
+import {
+  Search,
+  SlidersHorizontal,
+  ChevronDown,
+  MapPin,
+  Star,
+  Clock,
+} from 'lucide-react';
 
-// ============================================================
-//  DEMO DATA (পরবর্তীতে API call দিয়ে প্রতিস্থাপন করবে)
-// ============================================================
+// ──── Type ────
+interface Experience {
+  _id: string;
+  title: string;
+  shortDescription: string;
+  images: string[];
+  pricePerPerson: number;
+  currency: string;
+  location: { city: string; area?: string };
+  ratingAvg: number;
+  reviewCount: number;
+  duration: number;
+  category: string;
+}
+
+// ──── Demo Data ────
 const allExperiences: Experience[] = [
   {
     _id: '1',
@@ -196,7 +215,6 @@ const allExperiences: Experience[] = [
 ];
 
 const ITEMS_PER_PAGE = 8;
-
 const categories = [
   { value: '', label: 'All Categories' },
   { value: 'cooking-class', label: 'Cooking Class' },
@@ -204,7 +222,6 @@ const categories = [
   { value: 'farm-visit', label: 'Farm Visit' },
   { value: 'dinner', label: 'Dinner Experience' },
 ];
-
 const sortOptions = [
   { value: 'newest', label: 'Newest' },
   { value: 'price-low', label: 'Price: Low to High' },
@@ -212,6 +229,87 @@ const sortOptions = [
   { value: 'rating', label: 'Top Rated' },
 ];
 
+// ──── Inline ExperienceCard ────
+function ExperienceCard({ experience }: { experience: Experience }) {
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      whileInView={{ opacity: 1, y: 0 }}
+      viewport={{ once: true }}
+      transition={{ duration: 0.3 }}
+      whileHover={{ y: -5 }}
+      className="bg-white rounded-2xl shadow-sm hover:shadow-md transition-shadow overflow-hidden flex flex-col"
+    >
+      <div className="relative aspect-[4/3] overflow-hidden">
+        <Image
+          src={experience.images[0]}
+          alt={experience.title}
+          fill
+          sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
+          className="object-cover hover:scale-105 transition-transform duration-500"
+        />
+        <div className="absolute top-3 left-3 bg-[#E67E22] text-white text-xs font-semibold px-3 py-1 rounded-full">
+          {experience.currency === 'BDT' ? '৳' : '$'}
+          {experience.pricePerPerson}
+          <span className="font-normal"> / person</span>
+        </div>
+      </div>
+      <div className="p-5 flex flex-col flex-1">
+        <h3 className="text-lg font-bold text-[#3E2723] mb-1 line-clamp-1">
+          {experience.title}
+        </h3>
+        <p className="text-[#9C908A] text-sm mb-3 line-clamp-2">
+          {experience.shortDescription}
+        </p>
+        <div className="flex items-center gap-3 text-xs text-[#9C908A] mb-3">
+          <span className="flex items-center gap-1">
+            <MapPin className="w-3.5 h-3.5 text-[#E67E22]" />
+            {experience.location.city}
+          </span>
+          <span className="flex items-center gap-1">
+            <Clock className="w-3.5 h-3.5 text-[#E67E22]" />
+            {experience.duration}h
+          </span>
+        </div>
+        <div className="flex items-center justify-between mt-auto">
+          <span className="flex items-center gap-1 text-sm">
+            <Star className="w-4 h-4 fill-[#E67E22] text-[#E67E22]" />
+            <span className="font-semibold text-[#3E2723]">
+              {experience.ratingAvg.toFixed(1)}
+            </span>
+            <span className="text-[#9C908A]">({experience.reviewCount})</span>
+          </span>
+          <Link
+            href={`/experiences/${experience._id}`}
+            className="text-sm font-medium text-[#E67E22] hover:underline"
+          >
+            View Details
+          </Link>
+        </div>
+      </div>
+    </motion.div>
+  );
+}
+
+// ──── Inline Skeleton ────
+function ExperienceCardSkeleton() {
+  return (
+    <div className="bg-white rounded-2xl shadow-sm overflow-hidden animate-pulse">
+      <div className="aspect-[4/3] bg-gray-200" />
+      <div className="p-5 space-y-3">
+        <div className="h-4 bg-gray-200 rounded w-3/4" />
+        <div className="h-3 bg-gray-200 rounded w-full" />
+        <div className="h-3 bg-gray-200 rounded w-1/2" />
+        <div className="flex justify-between items-center pt-2">
+          <div className="h-4 bg-gray-200 rounded w-16" />
+          <div className="h-4 bg-gray-200 rounded w-20" />
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ──── Main Page ────
 export default function ExplorePage() {
   const [search, setSearch] = useState('');
   const [category, setCategory] = useState('');
@@ -220,13 +318,13 @@ export default function ExplorePage() {
   const [sortBy, setSortBy] = useState('newest');
   const [currentPage, setCurrentPage] = useState(1);
   const [showFilters, setShowFilters] = useState(false);
-  const [loading, setLoading] = useState(false); // পরবর্তীতে API fetch-এর সময় true করবে
+  const [loading, setLoading] = useState(false); // future API loading
 
-  // ─── ফিল্টারিং ও সার্চ ──────────────────────────
+  // ─── Filtering & Sorting ───
   const filteredExperiences = useMemo(() => {
     let result = [...allExperiences];
 
-    // সার্চ (নাম, শহর, ক্যাটাগরি)
+    // Search
     if (search.trim()) {
       const q = search.toLowerCase();
       result = result.filter(
@@ -236,24 +334,17 @@ export default function ExplorePage() {
           e.category.toLowerCase().includes(q)
       );
     }
-
-    // ক্যাটাগরি
-    if (category) {
-      result = result.filter((e) => e.category === category);
-    }
-
-    // প্রাইস রেঞ্জ
+    // Category
+    if (category) result = result.filter((e) => e.category === category);
+    // Price range
     result = result.filter(
       (e) =>
         e.pricePerPerson >= priceRange[0] && e.pricePerPerson <= priceRange[1]
     );
+    // Rating
+    if (minRating > 0) result = result.filter((e) => e.ratingAvg >= minRating);
 
-    // রেটিং
-    if (minRating > 0) {
-      result = result.filter((e) => e.ratingAvg >= minRating);
-    }
-
-    // সর্টিং
+    // Sort
     switch (sortBy) {
       case 'price-low':
         result.sort((a, b) => a.pricePerPerson - b.pricePerPerson);
@@ -264,20 +355,16 @@ export default function ExplorePage() {
       case 'rating':
         result.sort((a, b) => b.ratingAvg - a.ratingAvg);
         break;
-      // 'newest' – অর্ডার অপরিবর্তিত
     }
-
     return result;
   }, [search, category, priceRange, minRating, sortBy]);
 
-  // পেজিনেশন
   const totalPages = Math.ceil(filteredExperiences.length / ITEMS_PER_PAGE);
   const paginatedExperiences = filteredExperiences.slice(
     (currentPage - 1) * ITEMS_PER_PAGE,
     currentPage * ITEMS_PER_PAGE
   );
 
-  // ফিল্টার চেঞ্জ হলে প্রথম পেজে ফেরত
   const updateFilter =
     <T,>(setter: (val: T) => void) =>
     (val: T) => {
@@ -302,9 +389,8 @@ export default function ExplorePage() {
     search !== '';
 
   return (
-    <div className="min-h-screen bg-[#FFF8F0] pt-28 pb-20">
+    <div className="min-h-screen bg-[#FFF8F0] pt-15 pb-20">
       <Container>
-        {/* পেজ হেডিং */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -322,10 +408,9 @@ export default function ExplorePage() {
           </p>
         </motion.div>
 
-        {/* সার্চ ও ফিল্টার বার */}
+        {/* Search & Filter Bar */}
         <div className="bg-white rounded-2xl shadow-sm p-4 md:p-6 mb-8">
           <div className="flex flex-col md:flex-row gap-4 items-stretch md:items-center justify-between">
-            {/* সার্চ ইনপুট */}
             <div className="relative flex-1 w-full">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-[#9C908A]" />
               <input
@@ -336,8 +421,6 @@ export default function ExplorePage() {
                 className="w-full pl-10 pr-4 py-3 rounded-xl border border-gray-200 bg-white focus:border-[#E67E22] focus:ring-2 focus:ring-[#E67E22]/10 outline-none"
               />
             </div>
-
-            {/* সর্টিং ও ফিল্টার টগল */}
             <div className="flex items-center gap-3 w-full md:w-auto">
               <div className="relative flex-1 md:w-48">
                 <select
@@ -353,18 +436,15 @@ export default function ExplorePage() {
                 </select>
                 <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#9C908A] pointer-events-none" />
               </div>
-
               <button
                 onClick={() => setShowFilters(!showFilters)}
                 className="flex items-center gap-2 px-4 py-3 border border-gray-200 rounded-xl text-sm font-medium text-[#3B2F2F] hover:border-[#E67E22] transition-colors"
               >
-                <SlidersHorizontal className="w-4 h-4" />
-                Filters
+                <SlidersHorizontal className="w-4 h-4" /> Filters{' '}
                 {hasActiveFilters && (
                   <span className="w-2 h-2 rounded-full bg-[#E67E22]" />
                 )}
               </button>
-
               {hasActiveFilters && (
                 <button
                   onClick={clearAllFilters}
@@ -376,7 +456,7 @@ export default function ExplorePage() {
             </div>
           </div>
 
-          {/* এক্সপ্যান্ডেবল ফিল্টার প্যানেল */}
+          {/* Expandable Filters */}
           <AnimatePresence>
             {showFilters && (
               <motion.div
@@ -385,7 +465,6 @@ export default function ExplorePage() {
                 exit={{ height: 0, opacity: 0 }}
                 className="mt-4 pt-4 border-t border-gray-100 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 overflow-hidden"
               >
-                {/* ক্যাটাগরি */}
                 <div>
                   <label className="block text-sm font-medium text-[#3B2F2F] mb-1">
                     Category
@@ -402,8 +481,6 @@ export default function ExplorePage() {
                     ))}
                   </select>
                 </div>
-
-                {/* প্রাইস রেঞ্জ */}
                 <div>
                   <label className="block text-sm font-medium text-[#3B2F2F] mb-1">
                     Price (৳)
@@ -436,8 +513,6 @@ export default function ExplorePage() {
                     />
                   </div>
                 </div>
-
-                {/* ন্যূনতম রেটিং */}
                 <div>
                   <label className="block text-sm font-medium text-[#3B2F2F] mb-1">
                     Min Rating
@@ -460,7 +535,7 @@ export default function ExplorePage() {
           </AnimatePresence>
         </div>
 
-        {/* রেজাল্ট গ্রিড */}
+        {/* Results Grid */}
         {loading ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
             {Array.from({ length: ITEMS_PER_PAGE }).map((_, i) => (
@@ -474,8 +549,6 @@ export default function ExplorePage() {
                 <ExperienceCard key={exp._id} experience={exp} />
               ))}
             </div>
-
-            {/* পেজিনেশন */}
             {totalPages > 1 && (
               <div className="flex justify-center items-center gap-2 mt-12">
                 <button
@@ -490,11 +563,7 @@ export default function ExplorePage() {
                     <button
                       key={page}
                       onClick={() => setCurrentPage(page)}
-                      className={`w-10 h-10 rounded-lg text-sm font-medium transition-colors ${
-                        page === currentPage
-                          ? 'bg-[#E67E22] text-white'
-                          : 'border border-gray-200 text-[#3B2F2F] hover:border-[#E67E22]'
-                      }`}
+                      className={`w-10 h-10 rounded-lg text-sm font-medium transition-colors ${page === currentPage ? 'bg-[#E67E22] text-white' : 'border border-gray-200 text-[#3B2F2F] hover:border-[#E67E22]'}`}
                     >
                       {page}
                     </button>
