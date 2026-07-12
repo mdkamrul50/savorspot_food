@@ -12,10 +12,10 @@ import {
 } from 'framer-motion';
 import Container from './Container';
 import Button from '../ui/Button';
-import { authClient } from '@/lib/auth-client'; 
-import { User, LogOut } from 'lucide-react'; 
+import { authClient } from '@/lib/auth-client';
+import { User, LogOut } from 'lucide-react';
 
-// ──── Type Definitions ────
+// ──── Types ────
 interface NavLink {
   href: string;
   label: string;
@@ -41,6 +41,7 @@ const Navbar: FC = () => {
   const [profileDropdownOpen, setProfileDropdownOpen] =
     useState<boolean>(false);
   const pathname = usePathname();
+  const isHome = pathname === '/';
   const { scrollY, scrollYProgress } = useScroll();
 
   // better-auth session
@@ -64,18 +65,21 @@ const Navbar: FC = () => {
   const handleLogout = async () => {
     await authClient.signOut();
     setProfileDropdownOpen(false);
-    closeMobileMenu(); 
+    closeMobileMenu();
   };
 
-  
+  // Combine links based on auth status
   const navLinks = user ? [...publicLinks, ...authenticatedLinks] : publicLinks;
 
   return (
     <motion.header
+      
       className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
-        scrolled
-          ? 'bg-[#2D1B33]/40 backdrop-blur-xl shadow-lg shadow-black/10'
-          : 'bg-transparent '
+        isHome
+          ? scrolled
+            ? 'bg-[#2D1B33]/95 backdrop-blur-xl shadow-lg shadow-black/10'
+            : 'bg-transparent'
+          : 'bg-[#2D1B33]/95 backdrop-blur-xl shadow-lg shadow-black/10'
       }`}
       initial={{ y: -100 }}
       animate={{ y: 0 }}
@@ -125,7 +129,7 @@ const Navbar: FC = () => {
           {/* Desktop Right Side */}
           <div className="hidden lg:flex items-center gap-4">
             {isPending ? (
-              <div className="w-8 h-8 rounded-full bg-gray-500 animate-pulse" /> // skeleton while loading session
+              <div className="w-8 h-8 rounded-full bg-gray-500 animate-pulse" />
             ) : user ? (
               <div className="relative">
                 <button
@@ -218,7 +222,7 @@ const Navbar: FC = () => {
         </nav>
       </Container>
 
-      {/* Mobile Menu Overlay & Panel */}
+      {/* Mobile Menu */}
       <AnimatePresence>
         {mobileMenuOpen && (
           <>
