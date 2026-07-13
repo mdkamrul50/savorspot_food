@@ -1,7 +1,7 @@
 // src/app/experiences/[slug]/page.tsx
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useParams } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
 import Image from 'next/image';
@@ -18,7 +18,7 @@ import {
   ChevronRight,
 } from 'lucide-react';
 
-// ──── Types ────
+// ──── Types (backend response) ────
 interface Experience {
   _id: string;
   title: string;
@@ -33,12 +33,12 @@ interface Experience {
   duration: number;
   maxGroupSize: number;
   category: string;
-  host: {
+  host?: {
     name: string;
     avatar: string;
     bio: string;
   };
-  reviews: Review[];
+  reviews?: Review[];
 }
 
 interface Review {
@@ -49,81 +49,20 @@ interface Review {
   date: string;
 }
 
-// ──── Demo Data ────
-const allExperiences: Experience[] = [
-  {
-    _id: '1',
-    title: 'Traditional Biryani Masterclass',
-    shortDescription: 'Learn the secrets of authentic Dhaka-style biryani.',
-    fullDescription:
-      "Step into the heart of Old Dhaka and learn how to prepare the legendary Kacchi Biryani. Our host, Shirin Apa, will guide you through selecting the perfect rice, marinating the meat with a blend of spices passed down through generations, and layering everything in a traditional clay pot. You'll also learn to make complementary dishes like borhani and firni. The experience ends with a communal feast on the rooftop.",
-    images: [
-      'https://images.unsplash.com/photo-1563379091339-03b21ab4a4f8?w=1200&q=80',
-      'https://images.unsplash.com/photo-1556909114-f6e7ad7d3136?w=1200&q=80',
-      'https://images.unsplash.com/photo-1504674900247-0877df9cc836?w=1200&q=80',
-      'https://images.unsplash.com/photo-1506354666786-959d6d497f1a?w=1200&q=80',
-    ],
-    pricePerPerson: 1500,
-    currency: 'BDT',
-    location: {
-      city: 'Dhaka',
-      area: 'Old Dhaka',
-      fullAddress: '123 Chawk Bazar, Dhaka',
-    },
-    ratingAvg: 4.8,
-    reviewCount: 24,
-    duration: 3,
-    maxGroupSize: 8,
-    category: 'cooking-class',
-    host: {
-      name: 'Shirin Apa',
-      avatar:
-        'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=200&q=80',
-      bio: 'A home chef with 20 years of experience, Shirin Apa is famous in her neighborhood for her biryani.',
-    },
-    reviews: [
-      {
-        id: 'r1',
-        user: {
-          name: 'Rima Akter',
-          avatar:
-            'https://images.unsplash.com/photo-1580489944761-15a19d654956?w=100&q=80',
-        },
-        rating: 5,
-        comment:
-          'Absolutely incredible! I never knew making biryani could be this fun. Shirin Apa is a wonderful teacher.',
-        date: '2 weeks ago',
-      },
-      {
-        id: 'r2',
-        user: {
-          name: 'Tanvir Hasan',
-          avatar:
-            'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&q=80',
-        },
-        rating: 5,
-        comment:
-          'The rooftop feast at the end was magical. The biryani tasted like heaven. Highly recommended!',
-        date: '1 month ago',
-      },
-      {
-        id: 'r3',
-        user: {
-          name: 'Nusrat Jahan',
-          avatar:
-            'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=100&q=80',
-        },
-        rating: 4,
-        comment:
-          'Great experience, learned a lot about spices. Would have loved a bit more hands-on time.',
-        date: '2 months ago',
-      },
-    ],
-  },
-  // add more experiences for related (you can copy from explore page)
-];
+const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
 
-// Inline ExperienceCard for related items (simplified)
+// Helper function to add dummy host if missing (since backend may not have host yet)
+const enrichWithHost = (exp: Experience): Experience => ({
+  ...exp,
+  host: exp.host || {
+    name: 'Local Host',
+    avatar:
+      'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=100&q=80',
+    bio: 'Passionate local host sharing authentic flavors.',
+  },
+});
+
+// Mini card for related experiences
 function MiniExperienceCard({ experience }: { experience: Experience }) {
   return (
     <Link href={`/experiences/${experience._id}`}>
@@ -159,24 +98,91 @@ function MiniExperienceCard({ experience }: { experience: Experience }) {
 
 export default function ExperienceDetailPage() {
   const params = useParams();
-  const slug = params.slug as string;
-  const experience =
-    allExperiences.find((e) => e._id === slug) || allExperiences[0]; // fallback first
+  const slug = params.slug as string; // this is the experience _id
 
+  const [experience, setExperience] = useState<Experience | null>(null);
+  const [relatedExps, setRelatedExps] = useState<Experience[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [activeImage, setActiveImage] = useState(0);
   const [isLoved, setIsLoved] = useState(false);
 
-  const nextImage = () =>
-    setActiveImage((prev) => (prev + 1) % experience.images.length);
-  const prevImage = () =>
-    setActiveImage(
-      (prev) => (prev - 1 + experience.images.length) % experience.images.length
-    );
+  // Fetch main experience
+  useEffect(() => {
+    if (!slug) return;
+    let cancelled = false;
+    const fetchExperience = async () => {
+      setLoading(true);
+      setError(null);
+      try {
+        const res = await fetch(`${API_BASE}/api/experiences/${slug}`);
+        if (!res.ok) throw new Error('Experience not found');
+        const data = await res.json();
+        if (!cancelled) {
+          setExperience(enrichWithHost(data.experience));
+        }
+      } catch (err: any) {
+        if (!cancelled) setError(err.message);
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    };
+    fetchExperience();
+    return () => {
+      cancelled = true;
+    };
+  }, [slug]);
 
-  // Related experiences (others from the same array, limit 4)
-  const relatedExps = allExperiences
-    .filter((e) => e._id !== experience._id)
-    .slice(0, 4);
+  // Fetch related experiences (just a few, excluding current)
+  useEffect(() => {
+    if (!experience) return;
+    const fetchRelated = async () => {
+      try {
+        const res = await fetch(`${API_BASE}/api/experiences?limit=5&page=1`);
+        if (!res.ok) return;
+        const data = await res.json();
+        const others = (data.experiences as Experience[])
+          .filter((e: Experience) => e._id !== experience._id)
+          .slice(0, 4);
+        setRelatedExps(others);
+      } catch (err) {
+        // silently ignore; related is optional
+      }
+    };
+    fetchRelated();
+  }, [experience]);
+
+  const nextImage = () => {
+    if (experience)
+      setActiveImage((prev) => (prev + 1) % experience.images.length);
+  };
+  const prevImage = () => {
+    if (experience)
+      setActiveImage(
+        (prev) =>
+          (prev - 1 + experience.images.length) % experience.images.length
+      );
+  };
+
+  // Loading / Error / Not Found
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-[#FFF8F0] pt-28 pb-20 flex items-center justify-center">
+        <div className="animate-spin w-10 h-10 border-4 border-[#E67E22] border-t-transparent rounded-full" />
+      </div>
+    );
+  }
+
+  if (error || !experience) {
+    return (
+      <div className="min-h-screen bg-[#FFF8F0] pt-28 pb-20 flex flex-col items-center justify-center text-center">
+        <p className="text-xl text-[#3B2F2F] mb-2">Experience not found</p>
+        <Link href="/explore" className="text-[#E67E22] hover:underline">
+          Back to Explore
+        </Link>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-[#FFF8F0]">
@@ -278,7 +284,7 @@ export default function ExperienceDetailPage() {
             <button className="p-2 rounded-full text-gray-400 hover:bg-gray-100 transition">
               <Share2 className="w-5 h-5" />
             </button>
-            {/* Price & Book button (sticky on mobile, absolute on desktop maybe) */}
+            {/* Price & Book button */}
             <div className="hidden md:block bg-white shadow-lg rounded-xl p-4 text-right">
               <p className="text-xs text-gray-500">per person</p>
               <p className="text-2xl font-bold text-[#3B2F2F]">
@@ -291,9 +297,9 @@ export default function ExperienceDetailPage() {
           </div>
         </motion.div>
 
-        {/* Two Columns: Left (Description, Host), Right (Key Info + Booking) */}
+        {/* Two Columns */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-10">
-          {/* Left Column (spans 2) */}
+          {/* Left Column */}
           <div className="lg:col-span-2 space-y-10">
             {/* Description */}
             <motion.section
@@ -318,18 +324,19 @@ export default function ExperienceDetailPage() {
               className="bg-white rounded-2xl p-6 shadow-sm flex items-start gap-4"
             >
               <Image
-                src={experience.host.avatar}
-                alt={experience.host.name}
+                src={experience.host?.avatar || '/images/default-avatar.png'}
+                alt={experience.host?.name || 'Host'}
                 width={64}
                 height={64}
                 className="rounded-full object-cover"
               />
               <div>
                 <h3 className="font-bold text-[#3B2F2F]">
-                  Hosted by {experience.host.name}
+                  Hosted by {experience.host?.name || 'Unknown Host'}
                 </h3>
                 <p className="text-[#5C4F4A] text-sm mt-1">
-                  {experience.host.bio}
+                  {experience.host?.bio ||
+                    'Passionate local sharing food culture.'}
                 </p>
               </div>
             </motion.section>
@@ -344,50 +351,50 @@ export default function ExperienceDetailPage() {
               <h2 className="text-2xl font-bold text-[#3B2F2F] mb-4">
                 Reviews ({experience.reviewCount})
               </h2>
-              <div className="space-y-6">
-                {experience.reviews.map((rev) => (
-                  <div key={rev.id} className="flex gap-4">
-                    <Image
-                      src={rev.user.avatar}
-                      alt={rev.user.name}
-                      width={40}
-                      height={40}
-                      className="rounded-full object-cover"
-                    />
-                    <div className="flex-1">
-                      <div className="flex justify-between">
-                        <h4 className="font-medium text-[#3B2F2F]">
-                          {rev.user.name}
-                        </h4>
-                        <span className="text-xs text-gray-400">
-                          {rev.date}
-                        </span>
+              {experience.reviews && experience.reviews.length > 0 ? (
+                <div className="space-y-6">
+                  {experience.reviews.map((rev) => (
+                    <div key={rev.id} className="flex gap-4">
+                      <Image
+                        src={rev.user.avatar}
+                        alt={rev.user.name}
+                        width={40}
+                        height={40}
+                        className="rounded-full object-cover"
+                      />
+                      <div className="flex-1">
+                        <div className="flex justify-between">
+                          <h4 className="font-medium text-[#3B2F2F]">
+                            {rev.user.name}
+                          </h4>
+                          <span className="text-xs text-gray-400">
+                            {rev.date}
+                          </span>
+                        </div>
+                        <div className="flex items-center gap-1 mt-1">
+                          {Array.from({ length: 5 }).map((_, i) => (
+                            <Star
+                              key={i}
+                              className={`w-4 h-4 ${
+                                i < rev.rating
+                                  ? 'fill-[#E67E22] text-[#E67E22]'
+                                  : 'text-gray-300'
+                              }`}
+                            />
+                          ))}
+                        </div>
+                        <p className="text-sm text-[#5C4F4A] mt-2">
+                          {rev.comment}
+                        </p>
                       </div>
-                      <div className="flex items-center gap-1 mt-1">
-                        {Array.from({ length: 5 }).map((_, i) => (
-                          <Star
-                            key={i}
-                            className={`w-4 h-4 ${
-                              i < rev.rating
-                                ? 'fill-[#E67E22] text-[#E67E22]'
-                                : 'text-gray-300'
-                            }`}
-                          />
-                        ))}
-                      </div>
-                      <p className="text-sm text-[#5C4F4A] mt-2">
-                        {rev.comment}
-                      </p>
                     </div>
-                  </div>
-                ))}
-              </div>
-              {/* If logged in, show review form (just a placeholder) */}
-              {/* <div className="mt-6 border-t pt-6">
-                <h4 className="font-medium mb-3">Leave a review</h4>
-                <textarea rows={3} className="w-full border rounded-lg p-3 text-sm" placeholder="Share your experience..." />
-                <button className="mt-2 px-4 py-2 bg-[#E67E22] text-white rounded-full text-sm">Submit Review</button>
-              </div> */}
+                  ))}
+                </div>
+              ) : (
+                <p className="text-[#9C908A]">
+                  No reviews yet. Be the first to share your experience!
+                </p>
+              )}
             </motion.section>
           </div>
 
@@ -418,7 +425,8 @@ export default function ExperienceDetailPage() {
                 <div className="flex items-center gap-3">
                   <MapPin className="w-5 h-5 text-[#E67E22]" />
                   <span className="text-[#3B2F2F]">
-                    {experience.location.fullAddress}
+                    {experience.location.fullAddress ||
+                      experience.location.city}
                   </span>
                 </div>
               </div>

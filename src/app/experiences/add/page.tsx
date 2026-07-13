@@ -1,3 +1,4 @@
+// src/app/experiences/add/page.tsx
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -5,17 +6,7 @@ import { useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
 import Container from '@/components/layout/Container';
 import { authClient } from '@/lib/auth-client';
-import {
-  ChefHat,
-  MapPin,
-  Clock,
-  Users,
-  Camera,
-  ArrowRight,
-  ArrowLeft,
-  Plus,
-  Check,
-} from 'lucide-react';
+import { ArrowRight, ArrowLeft, Plus, Check } from 'lucide-react';
 import Link from 'next/link';
 
 // ──── Type Definitions ────
@@ -33,7 +24,7 @@ interface ExperienceForm {
   };
   duration: number;
   maxGroupSize: number;
-  images: string[]; // image URLs
+  images: string[];
 }
 
 interface FormErrors {
@@ -49,6 +40,8 @@ interface FormErrors {
   groupSize?: string;
   images?: string;
 }
+
+const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
 
 const initialForm: ExperienceForm = {
   title: '',
@@ -74,7 +67,7 @@ export default function AddExperiencePage() {
   const router = useRouter();
   const { data: session, isPending } = authClient.useSession();
 
-  // ──── Protect Route ────
+  // Protect Route
   useEffect(() => {
     if (!isPending && !session) {
       router.push('/login?redirect=/experiences/add');
@@ -132,20 +125,29 @@ export default function AddExperiencePage() {
     setForm({ ...form, images: form.images.filter((img) => img !== url) });
   };
 
+  // ──── Submit to Backend ────
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!validateStep(2)) return;
 
     setLoading(true);
     try {
-      // TODO: Replace with actual API call
-      // const res = await fetch('/api/experiences', { method: 'POST', body: JSON.stringify(form) });
-      console.log('Submitting experience:', form);
-      // Simulate API delay
-      await new Promise((r) => setTimeout(r, 1500));
+      const res = await fetch(`${API_BASE}/api/experiences`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(form),
+      });
+
+      if (!res.ok) {
+        const data = await res.json();
+        throw new Error(data.error || 'Failed to add experience');
+      }
+
+      // success
       setSuccess(true);
-    } catch (err) {
-      console.error(err);
+      // Optionally reset form or redirect after a few seconds
+    } catch (err: any) {
+      setErrors({ ...errors, title: err.message }); // showing generic error near title
     } finally {
       setLoading(false);
     }
@@ -159,10 +161,10 @@ export default function AddExperiencePage() {
     );
   }
 
-  if (!session) return null; // will redirect in useEffect
+  if (!session) return null; // will redirect
 
   return (
-    <div className="min-h-screen bg-[#FFF8F0] pt-15 pb-20">
+    <div className="min-h-screen bg-[#FFF8F0] pt-28 pb-20">
       <Container className="!max-w-3xl">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
@@ -318,7 +320,7 @@ export default function AddExperiencePage() {
                               fullDescription: undefined,
                             });
                           }}
-                          placeholder="Describe your experience in detail, what guests will do, menu, etc."
+                          placeholder="Describe your experience in detail..."
                           className="w-full rounded-xl border border-gray-200 px-4 py-3 focus:border-[#E67E22] outline-none resize-none"
                         />
                         {errors.fullDescription && (
