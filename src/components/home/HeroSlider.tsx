@@ -70,7 +70,7 @@ export default function HeroSlider() {
 
   return (
     <section
-      className="relative h-[70vh] overflow-hidden -mt-20"
+      className="relative h-[70vh] overflow-hidden -mt-20 rounded-b-full bg-[#FFF1E6]"
       onMouseEnter={handleMouseEnter}
       onMouseLeave={handleMouseLeave}
     >
