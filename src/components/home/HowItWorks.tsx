@@ -60,7 +60,7 @@ export default function HowItWorks() {
   return (
     <section
       ref={sectionRef}
-      className="relative py-20 md:py-28 bg-[#e9cfbc] overflow-hidden"
+      className="relative py-20 md:py-28 bg-[#FFF1E6] overflow-hidden"
     >
       {/* Subtle ambient blobs */}
       <div className="absolute inset-0 pointer-events-none">

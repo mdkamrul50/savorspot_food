@@ -104,7 +104,7 @@ export default function Categories() {
               </p>
             </motion.div>
 
-            {/* Categories Grid – সমান বর্গাকার কার্ড */}
+    
             <motion.div
               className="grid grid-cols-2 sm:grid-cols-3 gap-4"
               variants={containerVariants}
@@ -117,14 +117,14 @@ export default function Categories() {
                   key={cat.slug}
                   variants={itemVariants}
                   whileHover={{ y: -4, transition: { duration: 0.2 } }}
-                  className="group aspect-square"
+                  className="group aspect-square "
                 >
                   <Link
                     href={`/explore?category=${cat.slug}`}
-                    className="flex flex-col items-center justify-center h-full bg-white rounded-2xl shadow-sm 
+                    className="flex flex-col items-center justify-center h-full rounded-2xl shadow-xl 
                                transition-all duration-300 border border-transparent 
                                hover:bg-brand-orange/5 hover:border-brand-orange/20 hover:shadow-md 
-                               p-4"
+                               p-4 "
                   >
                     {/* Icon circle */}
                     <div

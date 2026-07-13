@@ -98,7 +98,7 @@ export default function TopHosts() {
   }, []);
 
   return (
-    <section className="py-20 md:py-28 bg-[#FFF8F0] overflow-hidden">
+    <section className="py-20 md:py-15 bg-[#FFF8F0] overflow-hidden">
       <Container>
         <motion.div
           initial={{ opacity: 0, y: 20 }}

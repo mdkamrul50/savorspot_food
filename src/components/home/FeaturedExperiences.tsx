@@ -152,7 +152,7 @@ export default function FeaturedExperiences() {
                   initial={{ opacity: 0, y: 20 }}
                   whileInView={{ opacity: 1, y: 0 }}
                   viewport={{ once: true }}
-                  transition={{ duration: 0.4 }}
+                  transition={{ duration: 0.3 }}
                   whileHover={{ y: -5 }}
                   className="bg-white rounded-2xl shadow-sm hover:shadow-md transition-shadow overflow-hidden flex flex-col"
                 >
