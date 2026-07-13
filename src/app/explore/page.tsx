@@ -1,7 +1,7 @@
 // src/app/explore/page.tsx
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import Container from '@/components/layout/Container';
 import Image from 'next/image';
@@ -30,191 +30,9 @@ interface Experience {
   category: string;
 }
 
-// ──── Demo Data ────
-const allExperiences: Experience[] = [
-  {
-    _id: '1',
-    title: 'Traditional Biryani Masterclass',
-    shortDescription: 'Learn the secrets of authentic Dhaka-style biryani.',
-    images: [
-      'https://images.unsplash.com/photo-1563379091339-03b21ab4a4f8?w=600&q=80',
-    ],
-    pricePerPerson: 1500,
-    currency: 'BDT',
-    location: { city: 'Dhaka' },
-    ratingAvg: 4.8,
-    reviewCount: 24,
-    duration: 3,
-    category: 'cooking-class',
-  },
-  {
-    _id: '2',
-    title: 'Street Food Safari at Night',
-    shortDescription: 'Taste the best fuchka, chotpoti & more.',
-    images: [
-      'https://images.unsplash.com/photo-1504674900247-0877df9cc836?w=600&q=80',
-    ],
-    pricePerPerson: 800,
-    currency: 'BDT',
-    location: { city: 'Chittagong' },
-    ratingAvg: 4.6,
-    reviewCount: 18,
-    duration: 2.5,
-    category: 'street-food',
-  },
-  {
-    _id: '3',
-    title: 'Farm-to-Table Organic Lunch',
-    shortDescription: 'Fresh farm visit and a home-cooked organic meal.',
-    images: [
-      'https://images.unsplash.com/photo-1506354666786-959d6d497f1a?w=600&q=80',
-    ],
-    pricePerPerson: 2000,
-    currency: 'BDT',
-    location: { city: 'Sylhet' },
-    ratingAvg: 4.9,
-    reviewCount: 32,
-    duration: 5,
-    category: 'farm-visit',
-  },
-  {
-    _id: '4',
-    title: 'Pitha Making Workshop',
-    shortDescription: 'Hands-on pitha making with a grandmother.',
-    images: [
-      'https://images.unsplash.com/photo-1556909114-f6e7ad7d3136?w=600&q=80',
-    ],
-    pricePerPerson: 600,
-    currency: 'BDT',
-    location: { city: 'Manikganj' },
-    ratingAvg: 4.7,
-    reviewCount: 15,
-    duration: 2,
-    category: 'cooking-class',
-  },
-  {
-    _id: '5',
-    title: 'Fuchka & Chaat Walk',
-    shortDescription: 'Evening walk tasting the spiciest fuchka in town.',
-    images: [
-      'https://images.unsplash.com/photo-1504674900247-0877df9cc836?w=600&q=80',
-    ],
-    pricePerPerson: 500,
-    currency: 'BDT',
-    location: { city: 'Dhaka' },
-    ratingAvg: 4.3,
-    reviewCount: 10,
-    duration: 2,
-    category: 'street-food',
-  },
-  {
-    _id: '6',
-    title: 'Mughlai Feast Cooking Class',
-    shortDescription: 'Learn authentic Mughlai dishes from a royal chef.',
-    images: [
-      'https://images.unsplash.com/photo-1556909114-f6e7ad7d3136?w=600&q=80',
-    ],
-    pricePerPerson: 2500,
-    currency: 'BDT',
-    location: { city: 'Dhaka' },
-    ratingAvg: 4.9,
-    reviewCount: 40,
-    duration: 4,
-    category: 'cooking-class',
-  },
-  {
-    _id: '7',
-    title: 'Rooftop BBQ Dinner',
-    shortDescription: 'Enjoy a BBQ dinner with a view of the city skyline.',
-    images: [
-      'https://images.unsplash.com/photo-1504674900247-0877df9cc836?w=600&q=80',
-    ],
-    pricePerPerson: 1200,
-    currency: 'BDT',
-    location: { city: 'Chittagong' },
-    ratingAvg: 4.5,
-    reviewCount: 22,
-    duration: 3,
-    category: 'dinner',
-  },
-  {
-    _id: '8',
-    title: 'Traditional Fish Market Tour',
-    shortDescription: 'Visit the bustling fish market and cook fresh catch.',
-    images: [
-      'https://images.unsplash.com/photo-1506354666786-959d6d497f1a?w=600&q=80',
-    ],
-    pricePerPerson: 700,
-    currency: 'BDT',
-    location: { city: 'Sylhet' },
-    ratingAvg: 4.2,
-    reviewCount: 8,
-    duration: 4,
-    category: 'farm-visit',
-  },
-  {
-    _id: '9',
-    title: 'Tea Garden Plucking & Tasting',
-    shortDescription: 'Walk through tea gardens and taste the finest blends.',
-    images: [
-      'https://images.unsplash.com/photo-1506354666786-959d6d497f1a?w=600&q=80',
-    ],
-    pricePerPerson: 1800,
-    currency: 'BDT',
-    location: { city: 'Sylhet' },
-    ratingAvg: 4.8,
-    reviewCount: 30,
-    duration: 5,
-    category: 'farm-visit',
-  },
-  {
-    _id: '10',
-    title: 'Hilsa Festival Evening',
-    shortDescription: 'Celebrate the king of fish with multiple preparations.',
-    images: [
-      'https://images.unsplash.com/photo-1504674900247-0877df9cc836?w=600&q=80',
-    ],
-    pricePerPerson: 1000,
-    currency: 'BDT',
-    location: { city: 'Barisal' },
-    ratingAvg: 4.7,
-    reviewCount: 17,
-    duration: 3,
-    category: 'dinner',
-  },
-  {
-    _id: '11',
-    title: 'Bamboo Chicken Picnic',
-    shortDescription: 'Cook chicken inside bamboo over open fire in the hills.',
-    images: [
-      'https://images.unsplash.com/photo-1556909114-f6e7ad7d3136?w=600&q=80',
-    ],
-    pricePerPerson: 900,
-    currency: 'BDT',
-    location: { city: 'Bandarban' },
-    ratingAvg: 4.6,
-    reviewCount: 12,
-    duration: 6,
-    category: 'cooking-class',
-  },
-  {
-    _id: '12',
-    title: 'Misti Hub Dessert Tour',
-    shortDescription: 'Sample the best sweets from iconic shops.',
-    images: [
-      'https://images.unsplash.com/photo-1504674900247-0877df9cc836?w=600&q=80',
-    ],
-    pricePerPerson: 400,
-    currency: 'BDT',
-    location: { city: 'Dhaka' },
-    ratingAvg: 4.4,
-    reviewCount: 20,
-    duration: 2,
-    category: 'street-food',
-  },
-];
-
 const ITEMS_PER_PAGE = 8;
+const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
+
 const categories = [
   { value: '', label: 'All Categories' },
   { value: 'cooking-class', label: 'Cooking Class' },
@@ -318,53 +136,54 @@ export default function ExplorePage() {
   const [sortBy, setSortBy] = useState('newest');
   const [currentPage, setCurrentPage] = useState(1);
   const [showFilters, setShowFilters] = useState(false);
-  const [loading, setLoading] = useState(false); // future API loading
 
-  // ─── Filtering & Sorting ───
-  const filteredExperiences = useMemo(() => {
-    let result = [...allExperiences];
+  // Data & loading states
+  const [experiences, setExperiences] = useState<Experience[]>([]);
+  const [totalPages, setTotalPages] = useState(1);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-    // Search
-    if (search.trim()) {
-      const q = search.toLowerCase();
-      result = result.filter(
-        (e) =>
-          e.title.toLowerCase().includes(q) ||
-          e.location.city.toLowerCase().includes(q) ||
-          e.category.toLowerCase().includes(q)
-      );
-    }
-    // Category
-    if (category) result = result.filter((e) => e.category === category);
-    // Price range
-    result = result.filter(
-      (e) =>
-        e.pricePerPerson >= priceRange[0] && e.pricePerPerson <= priceRange[1]
-    );
-    // Rating
-    if (minRating > 0) result = result.filter((e) => e.ratingAvg >= minRating);
+  // Helper to build query string
+  const buildQuery = useCallback(() => {
+    const params = new URLSearchParams();
+    if (search) params.set('search', search);
+    if (category) params.set('category', category);
+    if (priceRange[0] > 0) params.set('minPrice', priceRange[0].toString());
+    if (priceRange[1] < 10000) params.set('maxPrice', priceRange[1].toString());
+    if (minRating > 0) params.set('minRating', minRating.toString());
+    if (sortBy !== 'newest') params.set('sort', sortBy);
+    params.set('page', currentPage.toString());
+    params.set('limit', ITEMS_PER_PAGE.toString());
+    return params.toString();
+  }, [search, category, priceRange, minRating, sortBy, currentPage]);
 
-    // Sort
-    switch (sortBy) {
-      case 'price-low':
-        result.sort((a, b) => a.pricePerPerson - b.pricePerPerson);
-        break;
-      case 'price-high':
-        result.sort((a, b) => b.pricePerPerson - a.pricePerPerson);
-        break;
-      case 'rating':
-        result.sort((a, b) => b.ratingAvg - a.ratingAvg);
-        break;
-    }
-    return result;
-  }, [search, category, priceRange, minRating, sortBy]);
+  // Fetch data from backend
+  useEffect(() => {
+    let cancelled = false;
+    const fetchData = async () => {
+      setLoading(true);
+      setError(null);
+      try {
+        const res = await fetch(`${API_BASE}/api/experiences?${buildQuery()}`);
+        if (!res.ok) throw new Error('Failed to fetch experiences');
+        const data = await res.json();
+        if (!cancelled) {
+          setExperiences(data.experiences);
+          setTotalPages(data.pagination.pages);
+        }
+      } catch (err: any) {
+        if (!cancelled) setError(err.message);
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    };
+    fetchData();
+    return () => {
+      cancelled = true;
+    };
+  }, [buildQuery]);
 
-  const totalPages = Math.ceil(filteredExperiences.length / ITEMS_PER_PAGE);
-  const paginatedExperiences = filteredExperiences.slice(
-    (currentPage - 1) * ITEMS_PER_PAGE,
-    currentPage * ITEMS_PER_PAGE
-  );
-
+  // Reset to page 1 when filters change
   const updateFilter =
     <T,>(setter: (val: T) => void) =>
     (val: T) => {
@@ -488,7 +307,7 @@ export default function ExplorePage() {
                   <div className="flex items-center gap-2">
                     <input
                       type="number"
-                      value={priceRange[0]}
+                      value={priceRange[0] || ''}
                       onChange={(e) =>
                         updateFilter(setPriceRange)([
                           Number(e.target.value),
@@ -501,7 +320,7 @@ export default function ExplorePage() {
                     <span className="text-[#9C908A]">-</span>
                     <input
                       type="number"
-                      value={priceRange[1]}
+                      value={priceRange[1] || ''}
                       onChange={(e) =>
                         updateFilter(setPriceRange)([
                           priceRange[0],
@@ -535,62 +354,80 @@ export default function ExplorePage() {
           </AnimatePresence>
         </div>
 
-        {/* Results Grid */}
-        {loading ? (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-            {Array.from({ length: ITEMS_PER_PAGE }).map((_, i) => (
-              <ExperienceCardSkeleton key={i} />
-            ))}
+        {/* Results */}
+        {error && (
+          <div className="text-center py-8">
+            <p className="text-red-500 mb-2">Error: {error}</p>
+            <button
+              onClick={() => window.location.reload()}
+              className="text-[#E67E22] hover:underline"
+            >
+              Try again
+            </button>
           </div>
-        ) : paginatedExperiences.length > 0 ? (
+        )}
+
+        {!error && (
           <>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-              {paginatedExperiences.map((exp) => (
-                <ExperienceCard key={exp._id} experience={exp} />
-              ))}
-            </div>
-            {totalPages > 1 && (
-              <div className="flex justify-center items-center gap-2 mt-12">
-                <button
-                  onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
-                  disabled={currentPage === 1}
-                  className="px-4 py-2 rounded-lg border border-gray-200 text-sm font-medium disabled:opacity-50 hover:border-[#E67E22] transition-colors"
-                >
-                  Previous
-                </button>
-                {Array.from({ length: totalPages }, (_, i) => i + 1).map(
-                  (page) => (
+            {loading ? (
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+                {Array.from({ length: ITEMS_PER_PAGE }).map((_, i) => (
+                  <ExperienceCardSkeleton key={i} />
+                ))}
+              </div>
+            ) : experiences.length > 0 ? (
+              <>
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+                  {experiences.map((exp) => (
+                    <ExperienceCard key={exp._id} experience={exp} />
+                  ))}
+                </div>
+                {totalPages > 1 && (
+                  <div className="flex justify-center items-center gap-2 mt-12">
                     <button
-                      key={page}
-                      onClick={() => setCurrentPage(page)}
-                      className={`w-10 h-10 rounded-lg text-sm font-medium transition-colors ${page === currentPage ? 'bg-[#E67E22] text-white' : 'border border-gray-200 text-[#3B2F2F] hover:border-[#E67E22]'}`}
+                      onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+                      disabled={currentPage === 1}
+                      className="px-4 py-2 rounded-lg border border-gray-200 text-sm font-medium disabled:opacity-50 hover:border-[#E67E22] transition-colors"
                     >
-                      {page}
+                      Previous
                     </button>
-                  )
+                    {Array.from({ length: totalPages }, (_, i) => i + 1).map(
+                      (page) => (
+                        <button
+                          key={page}
+                          onClick={() => setCurrentPage(page)}
+                          className={`w-10 h-10 rounded-lg text-sm font-medium transition-colors ${page === currentPage ? 'bg-[#E67E22] text-white' : 'border border-gray-200 text-[#3B2F2F] hover:border-[#E67E22]'}`}
+                        >
+                          {page}
+                        </button>
+                      )
+                    )}
+                    <button
+                      onClick={() =>
+                        setCurrentPage((p) => Math.min(totalPages, p + 1))
+                      }
+                      disabled={currentPage === totalPages}
+                      className="px-4 py-2 rounded-lg border border-gray-200 text-sm font-medium disabled:opacity-50 hover:border-[#E67E22] transition-colors"
+                    >
+                      Next
+                    </button>
+                  </div>
                 )}
+              </>
+            ) : (
+              <div className="text-center py-16">
+                <p className="text-[#9C908A] text-lg mb-4">
+                  No experiences found.
+                </p>
                 <button
-                  onClick={() =>
-                    setCurrentPage((p) => Math.min(totalPages, p + 1))
-                  }
-                  disabled={currentPage === totalPages}
-                  className="px-4 py-2 rounded-lg border border-gray-200 text-sm font-medium disabled:opacity-50 hover:border-[#E67E22] transition-colors"
+                  onClick={clearAllFilters}
+                  className="text-[#E67E22] font-medium hover:underline"
                 >
-                  Next
+                  Clear all filters
                 </button>
               </div>
             )}
           </>
-        ) : (
-          <div className="text-center py-16">
-            <p className="text-[#9C908A] text-lg mb-4">No experiences found.</p>
-            <button
-              onClick={clearAllFilters}
-              className="text-[#E67E22] font-medium hover:underline"
-            >
-              Clear all filters
-            </button>
-          </div>
         )}
       </Container>
     </div>
