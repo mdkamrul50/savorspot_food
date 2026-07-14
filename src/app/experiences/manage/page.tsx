@@ -19,7 +19,6 @@ import {
   RefreshCw,
 } from 'lucide-react';
 
-// ──── Type ────
 interface Experience {
   _id: string;
   title: string;
@@ -32,10 +31,12 @@ interface Experience {
   reviewCount: number;
   duration: number;
   category: string;
-  status?: 'pending' | 'approved' | 'rejected'; // status optional এখন
+  status?: 'pending' | 'approved' | 'rejected';
 }
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
+
+const getToken = () => localStorage.getItem('authToken');
 
 export default function ManageExperiencesPage() {
   const router = useRouter();
@@ -59,8 +60,14 @@ export default function ManageExperiencesPage() {
     setLoading(true);
     setError(null);
     try {
-      const res = await fetch(`${API_BASE}/api/experiences?limit=50`);
-      if (!res.ok) throw new Error('Failed to load experiences');
+      const userId = session?.user?.id; 
+      if (!userId) throw new Error('User not identified');
+
+     
+      const res = await fetch(
+        `${API_BASE}/api/experiences/my?userId=${userId}`
+      );
+      if (!res.ok) throw new Error('Failed to load your experiences');
       const data = await res.json();
       setExperiences(data.experiences);
     } catch (err: any) {
@@ -70,23 +77,19 @@ export default function ManageExperiencesPage() {
     }
   };
 
-  useEffect(() => {
-    if (session) fetchExperiences();
-  }, [session]);
-
-  const filtered = experiences.filter(
-    (e) =>
-      e.title.toLowerCase().includes(search.toLowerCase()) ||
-      e.location.city.toLowerCase().includes(search.toLowerCase())
-  );
-
   const handleDelete = async () => {
     if (!deleteId) return;
     setDeleting(true);
     try {
-      const res = await fetch(`${API_BASE}/api/experiences/${deleteId}`, {
-        method: 'DELETE',
-      });
+      const userId = session?.user?.id;
+      if (!userId) throw new Error('User not identified');
+
+      const res = await fetch(
+        `${API_BASE}/api/experiences/${deleteId}?userId=${userId}`,
+        {
+          method: 'DELETE',
+        }
+      );
       if (!res.ok) {
         const data = await res.json();
         throw new Error(data.error || 'Delete failed');
@@ -100,13 +103,11 @@ export default function ManageExperiencesPage() {
       setDeleting(false);
     }
   };
-
   const confirmDelete = (id: string) => {
     setDeleteId(id);
     setShowDeleteModal(true);
   };
 
-  // Helper to safely display status text
   const getStatusText = (status?: string) => {
     if (!status) return 'N/A';
     return status.charAt(0).toUpperCase() + status.slice(1);

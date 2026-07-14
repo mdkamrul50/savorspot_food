@@ -126,32 +126,40 @@ export default function AddExperiencePage() {
   };
 
   // ──── Submit to Backend ────
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!validateStep(2)) return;
+const handleSubmit = async (e: React.FormEvent) => {
+  e.preventDefault();
+  if (!validateStep(2)) return;
 
-    setLoading(true);
-    try {
-      const res = await fetch(`${API_BASE}/api/experiences`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(form),
-      });
 
-      if (!res.ok) {
-        const data = await res.json();
-        throw new Error(data.error || 'Failed to add experience');
-      }
+  if (!session?.user?.id) {
+    setErrors({ ...errors, title: 'You must be logged in to submit' });
+    return;
+  }
 
-      // success
-      setSuccess(true);
-      // Optionally reset form or redirect after a few seconds
-    } catch (err: any) {
-      setErrors({ ...errors, title: err.message }); // showing generic error near title
-    } finally {
-      setLoading(false);
+  setLoading(true);
+  try {
+    const res = await fetch(`${API_BASE}/api/experiences`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+   
+      body: JSON.stringify({
+        ...form,
+        userId: session.user.id,
+      }),
+    });
+
+    if (!res.ok) {
+      const data = await res.json();
+      throw new Error(data.error || 'Failed to add experience');
     }
-  };
+
+    setSuccess(true);
+  } catch (err: any) {
+    setErrors({ ...errors, title: err.message });
+  } finally {
+    setLoading(false);
+  }
+};
 
   if (isPending) {
     return (
