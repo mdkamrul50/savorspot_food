@@ -77,7 +77,7 @@ const allTestimonials = [...testimonials, ...testimonials];
 
 export default function Testimonials() {
   return (
-    <section className="py-10  bg-[#FFF8F0] overflow-hidden">
+    <section className="py-15  bg-[#FFF8F0] overflow-hidden">
       <Container>
         <motion.div
           initial={{ opacity: 0, y: 20 }}
