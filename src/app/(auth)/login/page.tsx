@@ -60,16 +60,40 @@ export default function LoginPage() {
     setIsDemoLoading(true);
     const demoEmail = 'foodie@test.com';
     const demoPass = 'test123';
+
     setEmail(demoEmail);
     setPassword(demoPass);
     setErrors({});
+
     try {
-      const { error } = await authClient.signIn.email({
+      let result = await authClient.signIn.email({
         email: demoEmail,
         password: demoPass,
       });
-      if (error) {
-        setErrors({ email: error.message || 'Demo login failed' });
+
+      if (result.error?.message?.includes('Invalid email or password')) {
+        const signUpResult = await authClient.signUp.email({
+          name: 'Demo User',
+          email: demoEmail,
+          password: demoPass,
+        });
+
+        if (signUpResult.error) {
+          setErrors({
+            email: signUpResult.error.message || 'Demo registration failed',
+          });
+          setIsDemoLoading(false);
+          return;
+        }
+
+        result = await authClient.signIn.email({
+          email: demoEmail,
+          password: demoPass,
+        });
+      }
+
+      if (result.error) {
+        setErrors({ email: result.error.message || 'Demo login failed' });
       } else {
         router.push('/');
       }
@@ -79,7 +103,6 @@ export default function LoginPage() {
       setIsDemoLoading(false);
     }
   };
-
   return (
     <div className="min-h-screen flex items-center justify-center bg-[#FFF8F0] py-12 px-4 sm:px-6 lg:px-8">
       <Container className="!max-w-5xl">
