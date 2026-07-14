@@ -36,8 +36,6 @@ interface Experience {
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
 
-const getToken = () => localStorage.getItem('authToken');
-
 export default function ManageExperiencesPage() {
   const router = useRouter();
   const { data: session, isPending: authLoading } = authClient.useSession();
@@ -60,10 +58,9 @@ export default function ManageExperiencesPage() {
     setLoading(true);
     setError(null);
     try {
-      const userId = session?.user?.id; 
+      const userId = session?.user?.id;
       if (!userId) throw new Error('User not identified');
 
-     
       const res = await fetch(
         `${API_BASE}/api/experiences/my?userId=${userId}`
       );
@@ -76,6 +73,16 @@ export default function ManageExperiencesPage() {
       setLoading(false);
     }
   };
+
+  useEffect(() => {
+    if (session) fetchExperiences();
+  }, [session]);
+
+  const filtered = experiences.filter(
+    (e) =>
+      e.title.toLowerCase().includes(search.toLowerCase()) ||
+      e.location.city.toLowerCase().includes(search.toLowerCase())
+  );
 
   const handleDelete = async () => {
     if (!deleteId) return;
@@ -103,6 +110,7 @@ export default function ManageExperiencesPage() {
       setDeleting(false);
     }
   };
+
   const confirmDelete = (id: string) => {
     setDeleteId(id);
     setShowDeleteModal(true);
@@ -168,8 +176,7 @@ export default function ManageExperiencesPage() {
                 href="/experiences/add"
                 className="inline-flex items-center gap-2 bg-[#E67E22] text-white px-5 py-3 rounded-full font-medium hover:bg-[#d35400] transition shadow-sm"
               >
-                <Plus className="w-5 h-5" />
-                Add New
+                <Plus className="w-5 h-5" /> Add New
               </Link>
             </div>
           </div>
